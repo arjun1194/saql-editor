@@ -1,0 +1,20 @@
+[package]
+name = "saql-editor"
+version = "0.1.0"
+edition = "2021"
+description = "Web editor for the SAQL engine — upload JSON/CSV and query it"
+
+[dependencies]
+# The engine, via path deps to the sibling repo (co-development). To build this
+# repo standalone, swap these for git deps:
+#   saql-core = { git = "https://github.com/arjun1194/saql", package = "saql-core" }
+saql-core = { path = "../saql/crates/saql-core" }
+saql-connectors = { path = "../saql/crates/saql-connectors" }
+# Must share saql-core's arrow major version so RecordBatch types unify.
+arrow = "53"
+axum = { version = "0.7", features = ["multipart"] }
+tokio = { version = "1", features = ["full"] }
+tower-http = { version = "0.5", features = ["fs"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tempfile = "3"

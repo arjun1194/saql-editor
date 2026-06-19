@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SAQL editor</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>SAQL editor</h1>
+    <span class="sub">upload JSON &amp; CSV, query it with the SAQL engine</span>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <section class="panel">
+        <h2>Add data</h2>
+        <input type="file" id="file" accept=".json,.csv" />
+        <input type="text" id="tname" placeholder="table name (optional)" />
+        <select id="kind">
+          <option value="">auto-detect kind</option>
+          <option value="json">json</option>
+          <option value="csv">csv</option>
+        </select>
+        <button id="uploadBtn">Upload</button>
+      </section>
+
+      <section class="panel grow">
+        <h2>Tables</h2>
+        <div id="tableList" class="table-list"></div>
+      </section>
+    </aside>
+
+    <main class="main">
+      <div class="editor">
+        <textarea id="sql" spellcheck="false" placeholder="SELECT * FROM your_table"></textarea>
+        <div class="toolbar">
+          <button id="runBtn">Run ▶</button>
+          <span class="hint">⌘ / Ctrl + Enter</span>
+          <span id="status" class="status"></span>
+        </div>
+      </div>
+      <div id="results" class="results">
+        <p class="empty">Upload a file, then run a query. Click a table to start.</p>
+      </div>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
