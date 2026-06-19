@@ -5,6 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>SAQL editor</title>
   <link rel="stylesheet" href="style.css" />
+  <script>
+    // Monaco's cross-origin worker shim (loads the worker from the CDN).
+    self.MonacoEnvironment = {
+      getWorkerUrl: function () {
+        return "data:text/javascript;charset=utf-8," + encodeURIComponent(
+          "self.MonacoEnvironment={baseUrl:'https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/'};" +
+          "importScripts('https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs/base/worker/workerMain.js');"
+        );
+      }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs/loader.js"></script>
 </head>
 <body>
   <header>
@@ -32,12 +44,12 @@
       </section>
     </aside>
 
-    <main class="main">
-      <div class="editor">
-        <textarea id="sql" spellcheck="false" placeholder="SELECT * FROM your_table"></textarea>
+    <main class="app-main">
+      <div class="app-editor">
+        <div id="editor"></div>
         <div class="toolbar">
           <button id="runBtn">Run ▶</button>
-          <span class="hint">⌘ / Ctrl + Enter</span>
+          <span class="hint">⌘ / Ctrl + Enter · Ctrl+Space for suggestions</span>
           <span id="status" class="status"></span>
         </div>
       </div>

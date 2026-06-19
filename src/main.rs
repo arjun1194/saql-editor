@@ -110,14 +110,19 @@ async fn main() {
     let web_dir = concat!(env!("CARGO_MANIFEST_DIR"), "/web");
     let app = Router::new()
         .route("/api/query", post(query))
+        .route("/api/validate", post(validate))
         .route("/api/upload", post(upload))
         .route("/api/tables", get(list_tables))
         .fallback_service(ServeDir::new(web_dir))
         .layer(DefaultBodyLimit::max(256 * 1024 * 1024))
         .with_state(state);
 
-    let addr = "127.0.0.1:7878";
-    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
+    let port = std::env::var("PORT")
+        .ok()
+        .and_then(|p| p.parse::<u16>().ok())
+        .unwrap_or(7878);
+    let addr = format!("127.0.0.1:{port}");
+    let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
     println!("SAQL editor → http://{addr}");
     axum::serve(listener, app).await.unwrap();
 }
@@ -125,6 +130,51 @@ async fn main() {
 async fn list_tables(State(state): State<Shared>) -> Json<Vec<TableMeta>> {
     let s = state.lock().unwrap();
     Json(s.tables.clone())
+}
+
+#[derive(Serialize)]
+struct ValidateResp {
+    valid: bool,
+    message: Option<String>,
+    line: Option<usize>,
+    col: Option<usize>,
+}
+
+/// Parse-only check for the editor's live squiggles. Uses the engine's public
+/// parser — no execution, no catalog, no engine changes. Catches syntax errors
+/// (e.g. an unquoted spaced column) with their line/column.
+async fn validate(Json(req): Json<QueryReq>) -> Json<ValidateResp> {
+    match saql_core::frontend::parse(&req.sql) {
+        Ok(_) => Json(ValidateResp {
+            valid: true,
+            message: None,
+            line: None,
+            col: None,
+        }),
+        Err(e) => {
+            let message = e.to_string();
+            let (line, col) = extract_line_col(&message);
+            Json(ValidateResp {
+                valid: false,
+                message: Some(message),
+                line,
+                col,
+            })
+        }
+    }
+}
+
+/// Pull "Line: N" / "Column: N" out of a sqlparser error message.
+fn extract_line_col(msg: &str) -> (Option<usize>, Option<usize>) {
+    fn num_after(msg: &str, marker: &str) -> Option<usize> {
+        let rest = &msg[msg.find(marker)? + marker.len()..];
+        rest.chars()
+            .take_while(|c| c.is_ascii_digit())
+            .collect::<String>()
+            .parse()
+            .ok()
+    }
+    (num_after(msg, "Line: "), num_after(msg, "Column: "))
 }
 
 async fn query(
