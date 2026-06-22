@@ -10,6 +10,7 @@
 # One-time prerequisites:
 #   rustup target add wasm32-unknown-unknown
 #   cargo install wasm-bindgen-cli --version 0.2.125   # must match the crate
+#   the engine repo checked out as a sibling ../saql (the wasm crate path-deps to it)
 set -euo pipefail
 
 DIR="$(cd "$(dirname "$0")" && pwd)"

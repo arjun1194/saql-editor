@@ -4,6 +4,12 @@
 
 > It's the friendly, point‑and‑click way to use SAQL. No command line required.
 
+## ▶ Try it live — no install
+
+### **[arjun1194.github.io/saql-editor](https://arjun1194.github.io/saql-editor/)**
+
+The whole SAQL engine is compiled to **WebAssembly** and runs **inside your browser tab**. There's no backend — your file is read locally and queried on your own machine, so your data never leaves the page. Just open the link, drop in a CSV/JSON, and write SQL.
+
 ## What you get
 
 - 📤 **Upload** a JSON or CSV file — it becomes a table you can query.
@@ -53,6 +59,11 @@ A tiny [axum](https://github.com/tokio-rs/axum) web server that links the SAQL e
 
 The front‑end is plain HTML/CSS/JS with Monaco from a CDN — **no build step**. All three UI files are embedded into the binary, so `saql-web` ships as a single executable.
 
+**Two ways it runs:**
+
+1. **Server mode** — the `saql-web` binary above (Rust executes your SQL in‑process).
+2. **Serverless / browser mode** — the engine is compiled to **WebAssembly** (`wasm/` crate) and the page (`docs/`) calls it directly, with no backend at all. This is what's hosted on GitHub Pages. Rebuild that bundle with `./build-pages.sh` (needs `rustup target add wasm32-unknown-unknown` and `wasm-bindgen-cli`).
+
 ## Future scope
 
 The editor grows alongside the [engine's roadmap](https://github.com/arjun1194/saql#future-scope). On the editor side specifically:
@@ -64,7 +75,9 @@ The editor grows alongside the [engine's roadmap](https://github.com/arjun1194/s
 - 📦 **More formats** — Parquet, TSV, NDJSON, Excel uploads.
 - 💾 **Save & share** — named saved queries, shareable links, and **export results** to CSV/JSON/Parquet.
 - 🧠 **Smarter editing** — semantic validation (unknown‑column errors, not just syntax), inline result previews, and query history.
-- 🚀 **Run fully in the browser** — compile the engine to WebAssembly so queries execute client‑side with zero server.
+- 📴 **Offline / installable** — cache the engine as a PWA so the playground keeps working with no network and installs like a desktop app.
+
+> ✅ **Already shipped:** *run fully in the browser* — the engine is compiled to WebAssembly and the editor is hosted on GitHub Pages at **[arjun1194.github.io/saql-editor](https://arjun1194.github.io/saql-editor/)**, zero server.
 
 ---
 

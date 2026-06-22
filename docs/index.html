@@ -8,7 +8,7 @@
   <script>
     // Created up-front so app.js can `await` it; the module script below
     // resolves it once the WASM engine has finished initializing.
-    window.saqlReady = new Promise((resolve) => { window.__saqlResolve = resolve; });
+    window.saqlReady = new Promise((resolve, reject) => { window.__saqlResolve = resolve; window.__saqlReject = reject; });
 
     // Monaco's cross-origin worker shim (loads the worker from the CDN).
     self.MonacoEnvironment = {
@@ -66,9 +66,13 @@
   <!-- Load the WASM engine, expose it as window.SAQL, then release app.js. -->
   <script type="module">
     import init, { tables, upload, query, validate } from "./pkg/saql_wasm.js";
-    await init();
-    window.SAQL = { tables, upload, query, validate };
-    window.__saqlResolve();
+    try {
+      await init();
+      window.SAQL = { tables, upload, query, validate };
+      window.__saqlResolve();
+    } catch (e) {
+      window.__saqlReject(e);
+    }
   </script>
   <script src="app.js"></script>
 </body>

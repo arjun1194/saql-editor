@@ -44,7 +44,7 @@ function renderTableList() {
       `<div class="app-cols">${cols}</div>`;
     div.querySelector(".thead").onclick = () => {
       if (!editor) return;
-      editor.setValue(`SELECT * FROM ${t.name} LIMIT 100`);
+      editor.setValue(`SELECT * FROM ${quoteIfNeeded(t.name)} LIMIT 100`);
       editor.focus();
       runQuery();
     };

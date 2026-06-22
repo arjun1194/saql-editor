@@ -22,8 +22,14 @@ function setStatus(msg, isError = false) {
 function quoteIfNeeded(name) {
   return /[^A-Za-z0-9_]/.test(name) ? `"${name}"` : name;
 }
-// Errors thrown across the wasm boundary arrive as plain strings.
+// Errors thrown across the wasm boundary arrive as plain strings. A
+// WebAssembly.RuntimeError instead means the engine trapped (an internal panic),
+// which leaves the module unusable — tell the user to reload rather than showing
+// a cryptic "unreachable executed".
 function errText(e) {
+  if (typeof WebAssembly !== "undefined" && e instanceof WebAssembly.RuntimeError) {
+    return "the SAQL engine hit an internal error — please reload the page to continue";
+  }
   return e && e.message ? e.message : String(e);
 }
 
@@ -54,7 +60,7 @@ function renderTableList() {
       `<div class="app-cols">${cols}</div>`;
     div.querySelector(".thead").onclick = () => {
       if (!editor) return;
-      editor.setValue(`SELECT * FROM ${t.name} LIMIT 100`);
+      editor.setValue(`SELECT * FROM ${quoteIfNeeded(t.name)} LIMIT 100`);
       editor.focus();
       runQuery();
     };
@@ -247,7 +253,11 @@ async function validateNow() {
 $("uploadBtn").onclick = uploadFile;
 $("runBtn").onclick = () => runQuery();
 
-// Show progress while the (~5 MB) engine wasm downloads + initializes.
+// Show progress while the (~5 MB) engine wasm downloads + initializes, and turn
+// a load failure into a visible error instead of a permanent "loading…".
 setStatus("loading the SAQL engine…");
-window.saqlReady.then(() => setStatus("engine ready — upload a file to begin"));
-loadTables();
+window.saqlReady
+  .then(() => setStatus("engine ready — upload a file to begin"))
+  .catch((e) => setStatus("couldn't load the SAQL engine — check your connection and reload (" + errText(e) + ")", true));
+loadTables().catch(() => {}); // the error is already surfaced above
+
