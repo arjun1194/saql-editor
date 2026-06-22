@@ -23,7 +23,6 @@ use axum::{
 use saql_core::Session;
 use serde::{Deserialize, Serialize};
 use std::io::Write;
-use tower_http::services::ServeDir;
 
 /// Cap rows returned to the browser so a huge result can't wedge the DOM.
 const MAX_DISPLAY_ROWS: usize = 5000;
@@ -107,13 +106,16 @@ async fn main() {
         tables: Vec::new(),
     }));
 
-    let web_dir = concat!(env!("CARGO_MANIFEST_DIR"), "/web");
     let app = Router::new()
         .route("/api/query", post(query))
         .route("/api/validate", post(validate))
         .route("/api/upload", post(upload))
         .route("/api/tables", get(list_tables))
-        .fallback_service(ServeDir::new(web_dir))
+        // UI assets are embedded in the binary — no external web/ dir needed.
+        .route("/", get(index_html))
+        .route("/index.html", get(index_html))
+        .route("/app.js", get(app_js))
+        .route("/style.css", get(style_css))
         .layer(DefaultBodyLimit::max(256 * 1024 * 1024))
         .with_state(state);
 
@@ -125,6 +127,24 @@ async fn main() {
     let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
     println!("SAQL editor → http://{addr}");
     axum::serve(listener, app).await.unwrap();
+}
+
+// ---- embedded UI assets (baked into the binary) ----------------------------
+
+async fn index_html() -> impl IntoResponse {
+    axum::response::Html(include_str!("../web/index.html"))
+}
+async fn app_js() -> impl IntoResponse {
+    (
+        [(axum::http::header::CONTENT_TYPE, "application/javascript; charset=utf-8")],
+        include_str!("../web/app.js"),
+    )
+}
+async fn style_css() -> impl IntoResponse {
+    (
+        [(axum::http::header::CONTENT_TYPE, "text/css; charset=utf-8")],
+        include_str!("../web/style.css"),
+    )
 }
 
 async fn list_tables(State(state): State<Shared>) -> Json<Vec<TableMeta>> {
