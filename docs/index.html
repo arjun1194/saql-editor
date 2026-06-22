@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SAQL — run SQL in your browser</title>
+  <link rel="stylesheet" href="style.css" />
+  <script>
+    // Created up-front so app.js can `await` it; the module script below
+    // resolves it once the WASM engine has finished initializing.
+    window.saqlReady = new Promise((resolve) => { window.__saqlResolve = resolve; });
+
+    // Monaco's cross-origin worker shim (loads the worker from the CDN).
+    self.MonacoEnvironment = {
+      getWorkerUrl: function () {
+        return "data:text/javascript;charset=utf-8," + encodeURIComponent(
+          "self.MonacoEnvironment={baseUrl:'https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/'};" +
+          "importScripts('https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs/base/worker/workerMain.js');"
+        );
+      }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs/loader.js"></script>
+</head>
+<body>
+  <header>
+    <h1>SAQL</h1>
+    <span class="sub">run SQL on your JSON &amp; CSV — entirely in your browser, no upload, no server</span>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <section class="panel">
+        <h2>Add data</h2>
+        <input type="file" id="file" accept=".json,.csv" />
+        <input type="text" id="tname" placeholder="table name (optional)" />
+        <select id="kind">
+          <option value="">auto-detect kind</option>
+          <option value="json">json</option>
+          <option value="csv">csv</option>
+        </select>
+        <button id="uploadBtn">Upload</button>
+      </section>
+
+      <section class="panel grow">
+        <h2>Tables</h2>
+        <div id="tableList" class="table-list"></div>
+      </section>
+    </aside>
+
+    <main class="app-main">
+      <div class="app-editor">
+        <div id="editor"></div>
+        <div class="toolbar">
+          <button id="runBtn">Run ▶</button>
+          <span class="hint">⌘ / Ctrl + Enter · Ctrl+Space for suggestions</span>
+          <span id="status" class="status"></span>
+        </div>
+      </div>
+      <div id="results" class="results">
+        <p class="empty">Upload a file, then run a query. Click a table to start.</p>
+      </div>
+    </main>
+  </div>
+
+  <!-- Load the WASM engine, expose it as window.SAQL, then release app.js. -->
+  <script type="module">
+    import init, { tables, upload, query, validate } from "./pkg/saql_wasm.js";
+    await init();
+    window.SAQL = { tables, upload, query, validate };
+    window.__saqlResolve();
+  </script>
+  <script src="app.js"></script>
+</body>
+</html>
